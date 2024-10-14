@@ -1,35 +1,38 @@
-import pandas as pd  
-import re
 import os
+import pandas as pd
 
+# Definir rutas
+input_folder = 'input'
+output_folder = 'output'
+os.makedirs(output_folder, exist_ok=True)  # Crear la carpeta de salida si no existe
 
-def eliminar_primer_15(numero):
-    numero_str = str(numero) 
-   
-    nuevo_numero = re.sub(r'15', '', numero_str, count=1)
-    return nuevo_numero
+# Buscar archivo en la carpeta input
+for filename in os.listdir(input_folder):
+    if filename.endswith(".xlsx"):  # Asegurarse de que sea un archivo Excel
+        file_path = os.path.join(input_folder, filename)
 
+        # Leer el archivo Excel asegurándose de que pandas no convierta a int los números
+        df = pd.read_excel(file_path, dtype=str)
 
-def procesar_excel(ruta_archivo):
-    
-    df = pd.read_excel(ruta_archivo)
+        # Función para eliminar el primer "15" en cada número telefónico
+        def remove_first_15(phone):
+            phone_str = str(phone)  # Asegurarse de que sea string
+            start = phone_str.find('15')
+            if start != -1:
+                # Eliminar el primer "15" encontrado
+                return phone_str[:start] + phone_str[start+2:]
+            else:
+                return phone_str  # Si no hay "15", devuelve el número tal cual
 
-   
-    df['numeros_linea_procesado'] = df['numeros_linea'].apply(eliminar_primer_15)
+        # Crear una nueva columna con los números sin "15"
+        df['Telefono_sin_15'] = df.iloc[:, 0].apply(remove_first_15)
 
-   
-    ruta_salida = 'C:/Users/Usuario/PROYECTOS.GS/OUT15/output/archivo_procesado.xlsx'
+        # Eliminar la columna original
+        df = df.drop(df.columns[0], axis=1)
 
-   
-    os.makedirs(os.path.dirname(ruta_salida), exist_ok=True)
+        # Guardar el resultado en un archivo nuevo en la carpeta de salida
+        output_file = os.path.join(output_folder, 'output_without_15.xlsx')
+        df.to_excel(output_file, index=False)
 
-   
-    df = df.iloc[:, 1:]
+        print(f'Archivo procesado y guardado en: {output_file}')
 
-   
-    df.to_excel(ruta_salida, index=False)
-    print(f"Archivo procesado guardado como '{ruta_salida}'")
-
-
-ruta_archivo = 'C:/Users/Usuario/PROYECTOS.GS/OUT15/input/OUT15.xlsx'  
-procesar_excel(ruta_archivo)
